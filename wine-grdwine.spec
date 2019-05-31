@@ -16,6 +16,8 @@ Requires: libwine
 
 BuildRequires: libwine-devel
 
+ExclusiveArch: %ix86 x86_64
+
 %ifarch x86_64 aarch64
   %def_with build64
 %else
