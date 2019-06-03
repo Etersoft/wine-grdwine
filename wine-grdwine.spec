@@ -12,8 +12,6 @@ Packager: Konstantin Kondratyuk <kondratyuk@altlinux.org>
 # Source-url: ftp://ftp.guardant.ru/support/linux/grdwine-%version.tar.gz
 Source: %name-%version.tar
 
-Requires: libwine
-
 BuildRequires: libwine-devel
 
 ExclusiveArch: %ix86 x86_64
