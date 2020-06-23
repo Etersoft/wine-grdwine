@@ -21,6 +21,8 @@ AC_SUBST([wineincs])
 
 AC_CANONICAL_HOST
 
+AC_SYS_LARGEFILE
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL

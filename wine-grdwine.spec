@@ -1,6 +1,6 @@
 Name: wine-grdwine
 Version: 0.5.5
-Release: alt1
+Release: alt2
 
 Summary: Guardant usb dongle helper library for Wine
 License: LGPLv2
@@ -56,6 +56,9 @@ mkdir -p %buildroot/%winelibdir/
 %winelibdir/grdwine.dll.so
 
 %changelog
+* Tue Jun 23 2020 Vitaly Lipatov <lav@altlinux.ru> 0.5.5-alt2
+- add AC_SYS_LARGEFILE to configure.ac
+
 * Thu May 30 2019 Konstantin Kondratyuk <kondratyuk@altlinux.org> 0.5.5-alt1
 - new version (0.5.5) with rpmgs script
 
