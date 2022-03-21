@@ -11,6 +11,11 @@ grdwine$(EXEEXT):	grdwine.spec grdwine.o grdimpl_linux.o grdwine.dll.so
 grdwine.dll.so:	grdwine.spec grdwine.o grdimpl_linux.o
 		$(WINEGCC) -shared $^ -o $@ -lkernel32
 
-install-am:	grdwine.dll.so
-		$(INSTALL_PROGRAM) $^ $(winedlls)/$^
+grdwine.dll: grdwine.spec
+		$(WINEGCC) -o $@ -Wb,--fake-module -shared $^ -mno-cygwin
+
+install-am:	grdwine.dll.so grdwine.dll
+		$(MKDIR_P) $(winepe) $(wineso)
+		$(INSTALL_PROGRAM) grdwine.dll.so $(wineso)/grdwine.dll.so
+		$(INSTALL_PROGRAM) grdwine.dll $(winepe)/grdwine.dll
 
