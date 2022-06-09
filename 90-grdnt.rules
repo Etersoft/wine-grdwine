@@ -1,0 +1,26 @@
+# Guardant ID
+SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="0a89", ATTRS{idProduct}=="0002", MODE="0666"
+# Guardant Sign/Time
+SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="0a89", ATTRS{idProduct}=="0008", MODE="0666"
+# Guardant Code
+SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="0a89", ATTRS{idProduct}=="0009", MODE="0666"
+# Guardant Code Pro
+SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="0a89", ATTRS{idProduct}=="00c0", MODE="0666"
+
+# HID
+SUBSYSTEM=="usb", GOTO="grd_hid_rules_end_check_subsystem"
+SUBSYSTEM!="usbmisc" GOTO="grd_hid_rules_end"
+
+LABEL="grd_hid_rules_end_check_subsystem"
+
+ACTION!="add", GOTO="grd_hid_rules_end"
+KERNEL!="hiddev*", GOTO="grd_hid_rules_end"
+
+# Guardant Sign/Time HID
+ATTRS{idVendor}=="0a89", ATTRS{idProduct}=="000c", MODE="0666", SYMLINK+="grdhid%n", NAME="grdhid%n"
+# Guardant Code HID
+ATTRS{idVendor}=="0a89", ATTRS{idProduct}=="000d", MODE="0666", SYMLINK+="grdhid%n", NAME="grdhid%n"
+# Guardant Code Pro HID
+ATTRS{idVendor}=="0a89", ATTRS{idProduct}=="00c1", MODE="0666", SYMLINK+="grdhid%n", NAME="grdhid%n"
+
+LABEL="grd_hid_rules_end"

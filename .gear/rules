@@ -1,1 +1,2 @@
 tar: @name@
+copy?: *.rules
