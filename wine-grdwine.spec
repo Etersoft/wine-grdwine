@@ -1,17 +1,15 @@
 # TODO:
 %define optflags_lto %nil
 
-Name: wine-grdwine
+Name: wine-etersoft-grdwine
 Version: 0.5.5.1
-Release: alt3
+Release: alt4
 
 Summary: Guardant usb dongle helper library for Wine
 
 License: LGPLv2
 Group: Emulators
 Url: https://guardant.com
-
-Packager: Konstantin Kondratyuk <kondratyuk@altlinux.org>
 
 #Source-url: ftp://ftp.guardant.ru/support/linux/grdwine-%version.tar.gz
 # Source-url: https://github.com/Etersoft/grdwine/archive/refs/tags/v%version.tar.gz
@@ -25,14 +23,14 @@ ExclusiveArch: %ix86 x86_64
 
 %ifarch x86_64 aarch64
   %def_with build64
-  %define winepkgname wine-grdwine
+  %define winepkgname wine-etersoft-grdwine
 %else
   %def_without build64
-  %define winepkgname wine32-grdwine
+  %define winepkgname wine32-etersoft-grdwine
 %endif
 
 
-%define libwinedir %_libdir/wine
+%define libwinedir %_libdir/wine-etersoft
 
 # TODO: move to rpm-macros-wine
 # set arch dependent dirs
@@ -112,6 +110,9 @@ install -D -m0644 %SOURCE1 %buildroot%_udevrulesdir/90-grdnt.rules
 %endif
 
 %changelog
+* Sun Aug 14 2022 Vitaly Lipatov <lav@altlinux.ru> 0.5.5.1-alt4
+- put dlls to _libdir/wine-etersoft
+
 * Thu Jun 09 2022 Vitaly Lipatov <lav@altlinux.ru> 0.5.5.1-alt3
 - add udev rules to get correct permissions
 - build 32 bit package as wine32-grdwine
