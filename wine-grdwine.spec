@@ -24,10 +24,15 @@ ExclusiveArch: %ix86 x86_64
 %ifarch x86_64 aarch64
   %def_with build64
   %define winepkgname wine-etersoft-grdwine
+  %define opkgname wine-grdwine
 %else
   %def_without build64
   %define winepkgname wine32-etersoft-grdwine
+  %define opkgname wine32-grdwine
 %endif
+
+Provides: %opkgname = %EVR
+Obsoletes: %opkgname < %EVR
 
 
 %define libwinedir %_libdir/wine-etersoft
