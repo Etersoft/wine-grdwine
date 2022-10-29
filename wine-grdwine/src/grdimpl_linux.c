@@ -42,8 +42,10 @@
 #define GRD_VENDOR              0x0a89
 #define GRD_PRODID_S3S          0x08 /* Guardant Sign/Time USB */
 #define GRD_PRODID_S3S_HID      0x0C /* Guardant Sign/Time USB HID */
+#define GRD_PRODID_S3S_WINUSB   0xC2 /* Guardant Sign/Time USB (WINUSB) */
 #define GRD_PRODID_S3C          0x09 /* Guardant Code USB */
 #define GRD_PRODID_S3C_HID      0x0D /* Guardant Code USB HID */
+#define GRD_PRODID_S3C_WINUSB   0xC3 /* Guardant Code USB (WINSUB) */
 #define USBFS_PATH_ENV          "USB_DEVFS_PATH"
 #define GRD_IPC_NAME_ENV        "GRD_IPC_NAME"
 #define USBFS_PATH_1            "/dev/bus/usb"
@@ -385,10 +387,7 @@ int grd_ioctl_device(const char* dev_path, unsigned int prod_id, size_t pack_siz
  */
 int grd_probe_device(const char* dev_path, unsigned int* prod_id)
 {
-    unsigned char buf_tmpl[16] = {
-        0x12, 0x01, 0x00, 0x02, 0xff, 0x00, 0x00, 0x40,
-        0x89, 0x0a, 0x00, 0x00, 0x00, 0x01, 0x01, 0x02
-    };
+    unsigned char buf_tmpl[4] = {0x89, 0x0a, 0x00, 0x00};
     unsigned char buf[16];
     struct lock_descr lock;
     unsigned int id;
@@ -415,18 +414,19 @@ int grd_probe_device(const char* dev_path, unsigned int* prod_id)
             ret = -1;
         else
         {
-            ret = 0;
-            assert(sizeof(buf) == sizeof(buf_tmpl)  &&  sizeof(buf_tmpl) == 16);
-            buf_tmpl[10] = GRD_PRODID_S3S;
-            if (!memcmp(buf, buf_tmpl, sizeof(buf_tmpl)))
-                id = GRD_PRODID_S3S;
-            else
+            unsigned char p = 0;
+            unsigned char prod_ids[4] = {GRD_PRODID_S3S, GRD_PRODID_S3S_WINUSB, GRD_PRODID_S3C, GRD_PRODID_S3C_WINUSB};
+            ret = -1;
+            assert(sizeof(buf_tmpl) == 4);
+            for (; p < sizeof(prod_ids); ++p)
             {
-                buf_tmpl[10] = GRD_PRODID_S3C;
-                if (!memcmp(buf, buf_tmpl, sizeof(buf_tmpl)))
-                    id = GRD_PRODID_S3C;
-                else
-                    ret = -1;
+                buf_tmpl[2] = prod_ids[p];
+                if (!memcmp(buf + 8, buf_tmpl, sizeof(buf_tmpl)))
+                {
+                    id = prod_ids[p];
+                    ret = 0;
+                    break;
+                }
             }
         }
     }

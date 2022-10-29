@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.60)
-AC_INIT([GrdWine],[0.5.5],[hotline@guardant.ru])
+AC_INIT([GrdWine],[0.5.6],[hotline@guardant.ru])
 AC_CONFIG_SRCDIR([src/grdwine.c])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
@@ -12,23 +12,14 @@ AC_ARG_ENABLE([win64],
 AC_ARG_WITH([winedlls],
         [AC_HELP_STRING([--with-winedlls=PATH],[PATH to install .dll.so for Wine @<:@LIBDIR/wine@:>@])],
         [winedlls="${withval}"],[winedlls="\$(libdir)/wine"])
-AC_ARG_WITH([wineso],
-        [AC_HELP_STRING([--with-wineso=PATH],[PATH to install .dll.so for Wine @<:@LIBDIR/wine@:>@])],
-        [wineso="${withval}"],[wineso="\$(libdir)/wine"])
-AC_ARG_WITH([winepe],
-        [AC_HELP_STRING([--with-winepe=PATH],[PATH to install .dll for Wine @<:@LIBDIR/wine@:>@])],
-        [winepe="${withval}"],[wineso="\$(libdir)/wine"])
 AC_ARG_WITH([wineincs],
         [AC_HELP_STRING([--with-wineincs=PATH],[PATH to Wine C header files @<:@INCLUDEDIR@:>@])],
         [wineincs="${withval}"],[wineincs="\$(includedir)"])
 
-AC_SUBST([wineso])
-AC_SUBST([winepe])
+AC_SUBST([winedlls])
 AC_SUBST([wineincs])
 
 AC_CANONICAL_HOST
-
-AC_SYS_LARGEFILE
 
 # Checks for programs.
 AC_PROG_CC
