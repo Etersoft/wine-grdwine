@@ -1,2 +1,3 @@
 tar: @name@
 copy?: *.rules
+copy?: *.patch

@@ -1,0 +1,66 @@
+From 9eeb54a5348882ba3d89e7ee4a26a9a1687db4d5 Mon Sep 17 00:00:00 2001
+From: Vitaly Lipatov <lav@etersoft.ru>
+Date: Sat, 29 Oct 2022 10:15:12 +0300
+Subject: [PATCH] build both ELF and PE parts
+To: wine-devel <wine-devel@winehq.org>
+
+---
+ configure.ac    | 12 ++++++++----
+ src/Makefile.am | 11 ++++++++---
+ 2 files changed, 16 insertions(+), 7 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index d23cd41..137dcd8 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -9,14 +9,18 @@ AM_INIT_AUTOMAKE
+ 
+ AC_ARG_ENABLE([win64],
+         [AS_HELP_STRING([--enable-win64],[build a Win64 emulator on AMD64 (won't run Win32 binaries)])])
+-AC_ARG_WITH([winedlls],
+-        [AC_HELP_STRING([--with-winedlls=PATH],[PATH to install .dll.so for Wine @<:@LIBDIR/wine@:>@])],
+-        [winedlls="${withval}"],[winedlls="\$(libdir)/wine"])
++AC_ARG_WITH([wineso],
++        [AC_HELP_STRING([--with-wineso=PATH],[PATH to install .dll.so for Wine @<:@LIBDIR/wine@:>@])],
++        [wineso="${withval}"],[wineso="\$(libdir)/wine"])
++AC_ARG_WITH([winepe],
++        [AC_HELP_STRING([--with-winepe=PATH],[PATH to install .dll for Wine @<:@LIBDIR/wine@:>@])],
++        [winepe="${withval}"],[wineso="\$(libdir)/wine"])
+ AC_ARG_WITH([wineincs],
+         [AC_HELP_STRING([--with-wineincs=PATH],[PATH to Wine C header files @<:@INCLUDEDIR@:>@])],
+         [wineincs="${withval}"],[wineincs="\$(includedir)"])
+ 
+-AC_SUBST([winedlls])
++AC_SUBST([wineso])
++AC_SUBST([winepe])
+ AC_SUBST([wineincs])
+ 
+ AC_CANONICAL_HOST
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 7ecdcd9..f516f3d 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -5,12 +5,17 @@ grdwine_SOURCES = grdwine.spec grdwine.c grdimpl.h grdimpl_linux.c
+ AM_CPPFLAGS = -D__WINESRC__ -I$(wineincs) -I$(wineincs)/wine/windows
+ CLEANFILES = grdwine.dll.so
+ 
+-grdwine$(EXEEXT):	grdwine.spec grdwine.o grdimpl_linux.o grdwine.dll.so
++grdwine$(EXEEXT):	grdwine.spec grdwine.o grdimpl_linux.o grdwine.dll grdwine.dll.so
+ 			true
+ 
+ grdwine.dll.so:	grdwine.spec grdwine.o grdimpl_linux.o
+ 		$(WINEGCC) -shared $^ -o $@ -lkernel32
+ 
+-install-am:	grdwine.dll.so
+-		$(INSTALL_PROGRAM) $^ $(winedlls)/$^
++grdwine.dll: grdwine.spec
++		$(WINEGCC) -o $@ -Wb,--fake-module -shared $^ -mno-cygwin
++
++install-am:	grdwine.dll.so grdwine.dll
++		$(MKDIR_P) $(winepe) $(wineso)
++		$(INSTALL_PROGRAM) grdwine.dll.so $(wineso)/grdwine.dll.so
++		$(INSTALL_PROGRAM) grdwine.dll $(winepe)/grdwine.dll
+ 
+-- 
+2.33.4
+
