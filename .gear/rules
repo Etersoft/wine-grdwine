@@ -1,2 +1,3 @@
 tar: wine-grdwine name=@name@-@version@
 copy?: *.rules
+copy?: *.patch

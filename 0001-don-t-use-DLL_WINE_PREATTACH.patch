@@ -1,0 +1,27 @@
+From 7bfa5a40224de7a3f9af4f0be4c862f53d0d5c95 Mon Sep 17 00:00:00 2001
+From: Vitaly Lipatov <lav@etersoft.ru>
+Date: Sat, 29 Oct 2022 10:21:51 +0300
+Subject: [PATCH] don't use DLL_WINE_PREATTACH
+To: wine-devel <wine-devel@winehq.org>
+
+---
+ src/grdwine.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/src/grdwine.c b/src/grdwine.c
+index 79747f0..d2613c8 100644
+--- a/src/grdwine.c
++++ b/src/grdwine.c
+@@ -105,9 +105,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+ 
+     switch (fdwReason)
+     {
+-    case DLL_WINE_PREATTACH:
+-        return FALSE;     /* prefer native version */
+-
+     case DLL_PROCESS_ATTACH:
+         // DisableThreadLibraryCalls(hinstDLL);
+         break;
+-- 
+2.33.4
+
