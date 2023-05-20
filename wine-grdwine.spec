@@ -1,9 +1,12 @@
 # TODO:
 %define optflags_lto %nil
+# Fedora specific
+%define _lto_cflags %{nil}
+
 
 Name: wine-grdwine
 Version: 0.5.7
-Release: alt1
+Release: alt2
 
 Summary: Guardant usb dongle helper library for Wine
 
@@ -117,6 +120,9 @@ install -D -m0644 %SOURCE1 %buildroot%_udevrulesdir/90-grdnt.rules
 %endif
 
 %changelog
+* Sat May 20 2023 Vitaly Lipatov <lav@altlinux.ru> 0.5.7-alt2
+- disable LTO for Fedora too
+
 * Sat Oct 29 2022 Vitaly Lipatov <lav@altlinux.ru> 0.5.7-alt1
 - update to 0.5.7
 
