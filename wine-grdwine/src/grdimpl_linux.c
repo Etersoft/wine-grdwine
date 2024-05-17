@@ -46,6 +46,7 @@
 #define GRD_PRODID_S3C          0x09 /* Guardant Code USB */
 #define GRD_PRODID_S3C_HID      0x0D /* Guardant Code USB HID */
 #define GRD_PRODID_S3C_WINUSB   0xC3 /* Guardant Code USB (WINSUB) */
+#define GRD_PRODID_S2           0x03 /* Guardant Stealth 2 USB */
 #define USBFS_PATH_ENV          "USB_DEVFS_PATH"
 #define GRD_IPC_NAME_ENV        "GRD_IPC_NAME"
 #define USBFS_PATH_1            "/dev/bus/usb"
@@ -415,7 +416,7 @@ int grd_probe_device(const char* dev_path, unsigned int* prod_id)
         else
         {
             unsigned char p = 0;
-            unsigned char prod_ids[4] = {GRD_PRODID_S3S, GRD_PRODID_S3S_WINUSB, GRD_PRODID_S3C, GRD_PRODID_S3C_WINUSB};
+            unsigned char prod_ids[5] = {GRD_PRODID_S3S, GRD_PRODID_S3S_WINUSB, GRD_PRODID_S3C, GRD_PRODID_S3C_WINUSB, GRD_PRODID_S2};
             ret = -1;
             assert(sizeof(buf_tmpl) == 4);
             for (; p < sizeof(prod_ids); ++p)

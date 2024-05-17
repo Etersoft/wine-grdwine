@@ -1,3 +1,5 @@
+# Guardant Stealth 2
+SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", SYSFS{idVendor}=="0a89", SYSFS{idProduct}=="0003",>MODE="0666"
 # Guardant ID
 SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="0a89", ATTRS{idProduct}=="0002", MODE="0666"
 # Guardant Sign/Time
