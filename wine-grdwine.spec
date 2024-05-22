@@ -4,8 +4,8 @@
 %define _lto_cflags %{nil}
 
 Name: wine-etersoft-grdwine
-Version: 0.5.7.1
-Release: alt2
+Version: 0.5.7.2
+Release: alt1
 
 Summary: Guardant usb dongle helper library for Wine
 
@@ -122,6 +122,9 @@ install -D -m0644 %SOURCE1 %buildroot%_udevrulesdir/90-grdnt.rules
 %endif
 
 %changelog
+* Wed May 22 2024 Vitaly Lipatov <lav@altlinux.ru> 0.5.7.2-alt1
+- added guardant Stealth 2 support (eterbug #17339)
+
 * Sat May 20 2023 Vitaly Lipatov <lav@altlinux.ru> 0.5.7.1-alt2
 - disable LTO for Fedora too
 
