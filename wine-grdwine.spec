@@ -6,7 +6,7 @@
 
 Name: wine-grdwine
 Version: 0.5.7
-Release: alt2
+Release: alt3
 
 Summary: Guardant usb dongle helper library for Wine
 
@@ -120,6 +120,9 @@ install -D -m0644 %SOURCE1 %buildroot%_udevrulesdir/90-grdnt.rules
 %endif
 
 %changelog
+* Wed May 22 2024 Vitaly Lipatov <lav@altlinux.ru> 0.5.7-alt3
+- added guardant Stealth 2 support (eterbug #17339)
+
 * Sat May 20 2023 Vitaly Lipatov <lav@altlinux.ru> 0.5.7-alt2
 - disable LTO for Fedora too
 
