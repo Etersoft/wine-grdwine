@@ -4,7 +4,7 @@
 %define _lto_cflags %{nil}
 
 Name: wine-etersoft-grdwine
-Version: 0.5.7.2
+Version: 0.5.7.3
 Release: alt1
 
 Summary: Guardant usb dongle helper library for Wine
@@ -19,28 +19,48 @@ Source: %name-%version.tar
 
 Source1: 90-grdnt.rules
 
-Patch1: 0001-build-both-ELF-and-PE-parts.patch
-Patch2: 0001-don-t-use-DLL_WINE_PREATTACH.patch
-
-BuildRequires: libwine-devel >= 6.23
-
 ExclusiveArch: %ix86 x86_64
 
-%ifarch x86_64 aarch64
-  %def_with build64
-  %define winepkgname wine-etersoft-grdwine
-  %define opkgname wine-grdwine
-%else
-  %def_without build64
-  %define winepkgname wine32-etersoft-grdwine
-  %define opkgname wine32-grdwine
+%define libwinedir %_libdir/wine-etersoft
+
+# TODO: use mingw detection from wine or just wait for total PE using
+%def_with pebuild
+
+# check if we need wow64 build also
+%if "%(test -d %libwinedir/i386-windows && echo 1)" == "1"
+%def_with wow64
 %endif
+
+
+%ifarch x86_64 aarch64
+    %def_with build64
+    %define winearch wine64
+    %define winepkgname wine-etersoft-grdwine
+    %define winedevpkgname wine-etersoft-devel-tools
+    %define opkgname wine-grdwine
+%endif
+
+# workaround for https://bugzilla.altlinux.org/38130
+# buildwow64 = _arch = x86_64  && with wow64
+%if "%_arch" == "x86_64" && %{expand:%%{?_with_wow64:1}%%{!?_with_wow64:0}}
+    %def_with buildwow64
+    %undefine _with_build64
+%endif
+
+%ifarch %ix86
+    %def_without build64
+    %define winepkgname wine32-etersoft-grdwine
+    %define winedevpkgname wine32-etersoft-devel-tools
+    %define opkgname wine32-grdwine
+%endif
+
+BuildRequires: %winedevpkgname >= 9
+
+# lib.req: ERROR: /tmp/.private/lav/wine-cpcsp_proxy-buildroot/usr/lib64/wine/x86_64-unix/cpcsp_proxy.so: library ntdll.so not found
+AutoReq: no
 
 Provides: %opkgname = %EVR
 Obsoletes: %opkgname < %EVR
-
-
-%define libwinedir %_libdir/wine-etersoft
 
 # TODO: move to rpm-macros-wine
 # set arch dependent dirs
@@ -60,8 +80,10 @@ Obsoletes: %opkgname < %EVR
 %define winepedir aarch64-windows
 %define winesodir aarch64-unix
 %endif
+%define winepe32dir i386-windows
 
 %add_verify_elf_skiplist %libwinedir/%winesodir/grdwine.dll.so
+%add_verify_elf_skiplist %libwinedir/%winesodir/grdwine.so
 
 %description
 Guardant usb dongle helper library for Wine.
@@ -89,39 +111,64 @@ Old keys Stealth II and Stealth III are not supported here
 
 %prep
 %setup
-%patch1 -p1
-%patch2 -p1
+%if_with buildwow64
+cp -a grdwine grdwine_wow64
+%endif
 
 %build
-#autoreconf
-./bootstrap.sh
-
-%if_with build64
-%configure \
-	--enable-win64 \
+%make_build -C grdwine \
+    LIBDIR=%_libdir \
+%if_with pebuild
+    TARGETDLL=grdwine.dll \
 %else
-%configure \
+    TARGETDLL="grdwine.dll grdwine.dll.so" \
 %endif
-	--with-wineincs=%_includedir \
-	--with-wineso=%buildroot/%libwinedir/%winesodir \
-	--with-winepe=%buildroot/%libwinedir/%winepedir
+    %nil
 
-%make_build
+%if_with buildwow64
+%make_build -C grdwine_wow64 \
+    LIBDIR=%_libdir \
+    WOW64BUILD=yes \
+    TARGETDLL=grdwine.dll \
+    grdwine.dll
+    %nil
+%endif
 
 %install
-%makeinstall_std
+mkdir -p %buildroot%libwinedir/{%winesodir,%winepedir}
+
+cp grdwine/grdwine.so %buildroot%libwinedir/%winesodir
+cp grdwine/grdwine.dll %buildroot%libwinedir/%winepedir
+%if_with buildwow64
+mkdir -p %buildroot%libwinedir/%winepe32dir
+cp grdwine_wow64/grdwine.dll %buildroot%libwinedir/%winepe32dir
+%endif
+
+%if_without pebuild
+cp grdwine/grdwine.dll.so %buildroot%libwinedir/%winesodir
+%endif
+
 %if_with build64
 install -D -m0644 %SOURCE1 %buildroot%_udevrulesdir/90-grdnt.rules
 %endif
 
 %files -n %winepkgname
-%libwinedir/%winesodir/grdwine.dll.so
+%libwinedir/%winesodir/grdwine.so
 %libwinedir/%winepedir/grdwine.dll
+%if_with buildwow64
+%libwinedir/%winepe32dir/grdwine.dll
+%endif
+%if_without pebuild
+%libwinedir/%winesodir/grdwine.dll.so
+%endif
 %if_with build64
 %_udevrulesdir/*.rules
 %endif
 
 %changelog
+* Thu Sep 18 2025 Vitaly Lipatov <lav@altlinux.ru> 0.5.7.3-alt1
+- build with wow64 support
+
 * Wed May 22 2024 Vitaly Lipatov <lav@altlinux.ru> 0.5.7.2-alt1
 - added guardant Stealth 2 support (eterbug #17339)
 

@@ -1,0 +1,7 @@
+MODULE    = grdwine.dll
+UNIXLIB   = grdwine.so
+UNIX_CFLAGS =
+
+SOURCES = \
+	grdimpl_linux.c \
+	grdwine.c
