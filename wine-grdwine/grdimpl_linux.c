@@ -3,6 +3,7 @@
  * on Linux USB Device Filesystem and Linux USB HID Device Interface
  *
  * Copyright (C) 2008 Aktiv Co. (Aleksey Samsonov)
+ * Copyright (C) 2025 Dmitry Timoshkov for Etersoft
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,9 +20,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifdef HAVE_CONFIG_H
+#if 0
+#pragma makedep unix
+#endif
+
 #include <config.h>
-#endif /* HAVE_CONFIG_H */
+
 #include <assert.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
@@ -37,6 +41,9 @@
 #include <stdio.h>  /* for snprintf */
 #include <linux/usbdevice_fs.h>
 #include <linux/hiddev.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "grdimpl.h"
 
 #define GRD_VENDOR              0x0a89
@@ -64,7 +71,7 @@ static int create_lock_path(const char* dev_path, char* buf, size_t buf_size)
     const char* name_prefix;
     const char* slash;
     int ret;
-    size_t len, i, magic_num = 0;
+    int len, i, magic_num = 0;
 
     name_prefix = getenv(GRD_IPC_NAME_ENV);
     if (!name_prefix)
@@ -309,9 +316,16 @@ static int hiddevice_read(int fd, void* buf, size_t len)
     return 0;
 }
 
-int grd_ioctl_device(const char* dev_path, unsigned int prod_id, size_t pack_size,
-                     void* in, size_t len_in, void* out, size_t len_out)
+static NTSTATUS grd_ioctl_device(void *args)
 {
+    struct grd_ioctl_device_params *params = args;
+    const char *dev_path = params->dev_path;
+    unsigned int prod_id = params->prod_id;
+    size_t pack_size = params->pack_size;
+    void *in = params->in;
+    size_t len_in = params->in_size;
+    void *out = params->out;
+    size_t len_out = params->out_size;
     const int ishid = (prod_id == GRD_PRODID_S3S_HID || prod_id == GRD_PRODID_S3C_HID);
     struct lock_descr lock;
     int fd, r;
@@ -386,8 +400,11 @@ int grd_ioctl_device(const char* dev_path, unsigned int prod_id, size_t pack_siz
  * or device (dev_path eq "GRDHID_PATH_HEAD + N") is
  * Guardant Sign/Time/Code HID  then return 0, else return -1
  */
-int grd_probe_device(const char* dev_path, unsigned int* prod_id)
+static NTSTATUS grd_probe_device(void *args)
 {
+    struct grd_probe_device_params *params = args;
+    const char *dev_path = params->dev_path;
+    unsigned int *prod_id = params->prod_id;
     unsigned char buf_tmpl[4] = {0x89, 0x0a, 0x00, 0x00};
     unsigned char buf[16];
     struct lock_descr lock;
@@ -395,12 +412,12 @@ int grd_probe_device(const char* dev_path, unsigned int* prod_id)
     int fd, ret;
 
     if (!dev_path || !prod_id)
-        return -1;
+        return STATUS_INVALID_PARAMETER;
 
     /* lock process and open usbdev_fs device */
     fd = open_device(dev_path, &lock);
     if (fd < 0)
-        return -1;
+        return STATUS_DEVICE_NOT_CONNECTED;
 
     if (strncmp(dev_path, GRDHID_PATH_HEAD, sizeof(GRDHID_PATH_HEAD) - 1) == 0)
     {
@@ -437,7 +454,7 @@ int grd_probe_device(const char* dev_path, unsigned int* prod_id)
         ret = -1;
     if (ret == 0)
         *prod_id = id;
-    return ret;
+    return ret == 0 ? STATUS_SUCCESS : STATUS_DEVICE_NOT_CONNECTED;
 }
 
 static int load_usbfs_path(char* buf, size_t size)
@@ -531,38 +548,131 @@ static size_t search_grdhid_devices(search_usb_device_callback callback, void* p
 {
     char dev_path[PATH_MAX];
     struct stat buf;
-    size_t i;
-    int ret, count = 0;
+    int i;
+    size_t ret, count = 0;
 
     for (i = 0; i < GRDHID_MAX_COUNT; ++i)
     {
         ret = snprintf(dev_path, sizeof(dev_path), "%s%d",
                        GRDHID_PATH_HEAD, i);
-        assert(ret > 0  &&  (size_t)ret < sizeof(dev_path));
-        if (ret < 0  ||  (size_t)ret >= sizeof(dev_path))
+        if (ret >= sizeof(dev_path))
             continue;
 
         if (stat(dev_path, &buf) != 0)
             continue;
 
-        assert(callback);
         if (callback(dev_path, param))
             ++count;
     }
     return count;
 }
 
-int search_usb_devices(search_usb_device_callback callback, void* param)
+static int __attribute__((ms_abi)) device_enum_callback(const char *dev_path, void *param)
 {
+    struct grd_search_usb_devices_params *params = param;
+
+    if (params->count < params->max_count)
+        memcpy(params->dev_path[params->count].path, dev_path, min(strlen(dev_path) + 1, sizeof(params->dev_path[0].path)));
+
+    params->count++;
+    return 1;
+}
+
+static NTSTATUS grd_search_usb_devices(void *args)
+{
+    struct grd_search_usb_devices_params *params = args;
+    search_usb_device_callback callback = device_enum_callback;
     char usbfs_path[PATH_MAX];
     size_t count;
 
-    if (!callback)
-        return -1;
     if (load_usbfs_path(usbfs_path, sizeof(usbfs_path)) != 0)
-        return -1;
-    count = search_usbfs_devices(usbfs_path, callback, param);
-    count += search_grdhid_devices(callback, param);
-    return (int)count;
+        return STATUS_DEVICE_NOT_CONNECTED;
+    count = search_usbfs_devices(usbfs_path, callback, params);
+    count += search_grdhid_devices(callback, params);
+    params->count = count;
+    return count <= params->max_count ? STATUS_SUCCESS : STATUS_BUFFER_TOO_SMALL;
 }
 
+const unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    grd_ioctl_device,
+    grd_probe_device,
+    grd_search_usb_devices
+};
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_grd_ioctl_device(void *args)
+{
+    struct
+    {
+        PTR32 dev_path;
+        ULONG prod_id;
+        ULONG pack_size;
+        PTR32 in;
+        ULONG in_size;
+        PTR32 out;
+        ULONG out_size;
+    } const *params32 = args;
+    struct grd_ioctl_device_params params =
+    {
+        ULongToPtr(params32->dev_path),
+        params32->prod_id,
+        params32->pack_size,
+        ULongToPtr(params32->in),
+        params32->in_size,
+        ULongToPtr(params32->out),
+        params32->out_size
+    };
+    return grd_ioctl_device(&params);
+}
+
+static NTSTATUS wow64_grd_probe_device(void *args)
+{
+    struct
+    {
+        PTR32 dev_path;
+        PTR32 prod_id;
+    } const *params32 = args;
+    struct grd_probe_device_params params =
+    {
+        ULongToPtr(params32->dev_path),
+        ULongToPtr(params32->prod_id)
+    };
+    return grd_probe_device(&params);
+}
+
+static NTSTATUS wow64_grd_search_usb_devices(void *args)
+{
+    struct
+    {
+        PTR32 dev_path;
+        ULONG max_count;
+        ULONG count;
+    } *params32 = args;
+    struct grd_search_usb_devices_params params =
+    {
+        ULongToPtr(params32->dev_path),
+        params32->max_count,
+        params32->count
+    };
+    NTSTATUS status;
+    status = grd_search_usb_devices(&params);
+    params32->count = params.count;
+    return status;
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    wow64_grd_ioctl_device,
+    wow64_grd_probe_device,
+    wow64_grd_search_usb_devices
+};
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
+
+#endif /* _WIN64 */

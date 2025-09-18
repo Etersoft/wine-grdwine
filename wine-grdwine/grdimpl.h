@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008 Aktiv Co. (Aleksey Samsonov)
+ * Copyright (C) 2025 Dmitry Timoshkov for Etersoft
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,12 +20,7 @@
 #ifndef GRDIMPL__H__
 #define GRDIMPL__H__
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif /* HAVE_CONFIG_H */
-#ifdef HAVE_STDDEF_H
-#include <stddef.h>
-#endif /* HAVE_STDDEF_H */
+#include "wine/unixlib.h"
 
 typedef int __attribute__((ms_abi))
     (*search_usb_device_callback)(const char* path, void* param);
@@ -32,20 +28,50 @@ typedef int __attribute__((ms_abi))
 /*
  * Communication to device (which grd_probe_device returned zero).
  */
-int grd_ioctl_device(const char* dev_path, unsigned int prod_id,
-                     size_t pack_size, void* in, size_t len_in, void* out, size_t len_out);
+struct grd_ioctl_device_params
+{
+    const char *dev_path;
+    ULONG prod_id;
+    ULONG pack_size;
+    void *in;
+    ULONG in_size;
+    void *out;
+    ULONG out_size;
+};
 
 /*
  * Check device.
  * Return zero if device is Guardant Sign/Time or Guardant Code.
  */
-int grd_probe_device(const char* dev_path, unsigned int* prod_id);
+struct grd_probe_device_params
+{
+    const char *dev_path;
+    ULONG *prod_id;
+};
 
 /*
  * Search for all USB devices. Call callback function for each USB device.
  * Return the count of non-zero values which were returned from callback.
  */
-int search_usb_devices(search_usb_device_callback callback, void* param);
+struct grd_dev_path
+{
+    char path[MAX_PATH];
+};
+struct grd_search_usb_devices_params
+{
+    struct grd_dev_path *dev_path;
+    ULONG max_count;
+    ULONG count;
+};
+
+enum unix_funcs
+{
+    unix_grd_ioctl_device,
+    unix_grd_probe_device,
+    unix_grd_search_usb_devices,
+    unix_funcs_count
+};
+
+#define GRD_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
 #endif /* !GRDIMPL__H__ */
-
