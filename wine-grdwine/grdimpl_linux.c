@@ -24,8 +24,6 @@
 #pragma makedep unix
 #endif
 
-#include <config.h>
-
 #include <assert.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>

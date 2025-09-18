@@ -21,6 +21,7 @@
 
 #include <stddef.h>
 #include <stdarg.h> /* for #include "winbase.h" */
+#include <stdlib.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
