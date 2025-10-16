@@ -4,7 +4,7 @@
 %define _lto_cflags %{nil}
 
 Name: wine-etersoft-grdwine
-Version: 0.5.7.3
+Version: 0.5.7.4
 Release: alt1
 
 Summary: Guardant usb dongle helper library for Wine
@@ -44,7 +44,6 @@ ExclusiveArch: %ix86 x86_64
 # buildwow64 = _arch = x86_64  && with wow64
 %if "%_arch" == "x86_64" && %{expand:%%{?_with_wow64:1}%%{!?_with_wow64:0}}
     %def_with buildwow64
-    %undefine _with_build64
 %endif
 
 %ifarch %ix86
@@ -166,6 +165,9 @@ install -D -m0644 %SOURCE1 %buildroot%_udevrulesdir/90-grdnt.rules
 %endif
 
 %changelog
+* Thu Oct 16 2025 Vitaly Lipatov <lav@altlinux.ru> 0.5.7.4-alt1
+- add missed 90-grdnt.rules (don't unset build64 with wow64)
+
 * Thu Sep 18 2025 Vitaly Lipatov <lav@altlinux.ru> 0.5.7.3-alt1
 - build with wow64 support
 
