@@ -402,7 +402,7 @@ static NTSTATUS grd_probe_device(void *args)
 {
     struct grd_probe_device_params *params = args;
     const char *dev_path = params->dev_path;
-    unsigned int *prod_id = params->prod_id;
+    ULONG *prod_id = params->prod_id;
     unsigned char buf_tmpl[4] = {0x89, 0x0a, 0x00, 0x00};
     unsigned char buf[16];
     struct lock_descr lock;
