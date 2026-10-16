@@ -5,7 +5,7 @@
 
 Name: wine-etersoft-grdwine
 Version: 0.5.7.4
-Release: eter2
+Release: eter3
 
 Summary: Guardant usb dongle helper library for Wine
 
@@ -165,6 +165,9 @@ install -D -m0644 %SOURCE1 %buildroot%_udevrulesdir/90-grdnt.rules
 %endif
 
 %changelog
+* Fri Oct 16 2026 Vitaly Lipatov <lav@altlinux.ru> 0.5.7.4-eter3
+- fix build with wine 10.x headers on i586 (eterbug #19688)
+
 * Wed Dec 10 2025 Vitaly Lipatov <lav@altlinux.ru> 0.5.7.4-eter2
 - fix guardant Stealth 2 support (eterbug #18641)
 
